@@ -77,6 +77,12 @@ PUT    /api/invoices/{id}               ← UpdateInvoiceDto
 DELETE /api/invoices/{id}
 ```
 
+### Company Profile (`/api/companyprofile`)
+```
+GET    /api/companyprofile              → CompanyProfileResponseDto
+PUT    /api/companyprofile              ← UpdateCompanyProfileDto (upsert)
+```
+
 ## Example Requests
 
 ### Create Customer
