@@ -1,0 +1,40 @@
+# Build folders
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Rider
+.idea/
+
+# Logs
+*.log
+
+# NuGet
+packages/
+
+# Secrets
+appsettings.Development.json
+secrets.json
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Copilot / AI generated docs
+copilot/
+.github/copilot-instructions.md
+
+# Publish
+publish/
+
+# Temporary files
+tmp/
+temp/
+
+# Resharper
+_ReSharper*/
+*.DotSettings.user
