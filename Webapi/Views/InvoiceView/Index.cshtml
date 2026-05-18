@@ -1,0 +1,67 @@
+@model Webapi.ViewModels.InvoiceIndexViewModel
+@{
+    ViewData["Title"] = "Invoices";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Invoices</h1>
+        <a href="/Invoices/Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create New Invoice
+        </a>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (Model.Invoices.Any())
+    {
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Invoice #</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Subtotal</th>
+                                <th>VAT (@Model.Invoices.First().VATPercentage%)</th>
+                                <th>Total Amount</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var invoice in Model.Invoices)
+                            {
+                                <tr>
+                                    <td>@invoice.Id</td>
+                                    <td>@invoice.CustomerName</td>
+                                    <td>@invoice.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                    <td>@invoice.SubTotal.ToString("C")</td>
+                                    <td>@invoice.VATAmount.ToString("C")</td>
+                                    <td><strong>@invoice.TotalAmount.ToString("C")</strong></td>
+                                    <td>
+                                        <a href="/Invoices/Details/@invoice.Id" class="btn btn-sm btn-info">View</a>
+                                        <a href="/api/invoices/@invoice.Id/pdf" class="btn btn-sm btn-success" target="_blank">PDF</a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <p class="mb-0">No invoices found. <a href="/Invoices/Create">Create your first invoice</a></p>
+        </div>
+    }
+</div>
