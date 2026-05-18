@@ -38,3 +38,8 @@ temp/
 # Resharper
 _ReSharper*/
 *.DotSettings.user
+
+# Test results and coverage
+TestResults/
+coverage/
+*.html
