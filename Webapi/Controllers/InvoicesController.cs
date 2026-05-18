@@ -68,6 +68,9 @@ namespace Webapi.Controllers
                     CreatedAt = i.CreatedAt,
                     CustomerId = i.CustomerId,
                     CustomerName = i.Customer.Name,
+                    SubTotal = i.SubTotal,
+                    VATPercentage = i.VATPercentage,
+                    VATAmount = i.VATAmount,
                     TotalAmount = i.TotalAmount,
                     Items = i.Items.Select(item => new InvoiceItemResponseDto
                     {
@@ -96,10 +99,8 @@ namespace Webapi.Controllers
         {
             try
             {
-                
                 var invoice = await _invoiceService.CreateInvoiceAsync(dto);
 
-               
                 var response = new InvoiceResponseDto
                 {
                     Id = invoice.Id,
@@ -134,18 +135,15 @@ namespace Webapi.Controllers
         {
             try
             {
-                
                 await _invoiceService.UpdateInvoiceAsync(id, dto);
                 return NoContent();
             }
             catch (Exception ex)
             {
-                
                 if (ex.Message.Contains("Invoice not found"))
                 {
                     return NotFound();
                 }
-               
                 return BadRequest(ex.Message);
             }
         }

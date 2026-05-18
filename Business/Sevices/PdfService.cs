@@ -13,12 +13,10 @@ namespace Business.Sevices
             {
                 container.Page(page =>
                 {
-                    
                     page.Margin(30);
 
                     page.Header().Row(row =>
                     {
-                        // LEFT SIDE - COMPANY INFO
                         row.RelativeItem().Column(col =>
                         {
                             col.Item().Text(company.CompanyName)
@@ -37,7 +35,6 @@ namespace Business.Sevices
                             col.Item().Text($"Phone: {company.PhoneNumber}");
                         });
 
-                        // RIGHT SIDE - INVOICE INFO + PAYMENT INFO
                         row.RelativeItem().AlignRight().Column(col =>
                         {
                             col.Item().Text("INVOICE")
@@ -68,7 +65,6 @@ namespace Business.Sevices
 
                     page.Content().PaddingVertical(20).Column(col =>
                     {
-                        
                         col.Item().Text("Customer")
                             .FontSize(16)
                             .Bold();
@@ -78,18 +74,16 @@ namespace Business.Sevices
 
                         col.Item().PaddingTop(20);
 
-                        
                         col.Item().Table(table =>
                         {
                             table.ColumnsDefinition(columns =>
                             {
-                                columns.RelativeColumn(4); // Product
-                                columns.RelativeColumn(2); // Quantity
-                                columns.RelativeColumn(2); // Unit Price
-                                columns.RelativeColumn(2); // Total
+                                columns.RelativeColumn(4);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
+                                columns.RelativeColumn(2);
                             });
 
-                            
                             table.Header(header =>
                             {
                                 header.Cell().Element(CellStyle).Text("Product").Bold();
@@ -98,7 +92,6 @@ namespace Business.Sevices
                                 header.Cell().Element(CellStyle).AlignRight().Text("Total").Bold();
                             });
 
-                            
                             foreach (var item in invoice.Items)
                             {
                                 table.Cell().Element(CellStyle)
@@ -117,7 +110,6 @@ namespace Business.Sevices
                                     .Text($"{item.Quantity * item.UnitPrice:C}");
                             }
 
-                            
                             static IContainer CellStyle(IContainer container)
                             {
                                 return container
@@ -127,7 +119,6 @@ namespace Business.Sevices
                             }
                         });
 
-                        
                         col.Item().AlignRight().PaddingTop(20).Column(total =>
                         {
                             total.Item()
@@ -144,7 +135,6 @@ namespace Business.Sevices
                         });
                     });
 
-                    
                     page.Footer()
                         .AlignCenter()
                         .Text("Thank you for your business");

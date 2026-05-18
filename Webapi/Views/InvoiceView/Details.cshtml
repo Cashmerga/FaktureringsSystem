@@ -1,0 +1,108 @@
+@model Webapi.ViewModels.InvoiceDetailsViewModel
+@{
+    ViewData["Title"] = $"Invoice #{Model.Invoice.Id}";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Invoice #@Model.Invoice.Id</h1>
+        <div>
+            <a href="/api/invoices/@Model.Invoice.Id/pdf" class="btn btn-success" target="_blank">
+                <i class="bi bi-download"></i> Download PDF
+            </a>
+            <a href="/Invoices" class="btn btn-secondary">Back to List</a>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Invoice Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Invoice #:</dt>
+                        <dd class="col-sm-8">@Model.Invoice.Id</dd>
+
+                        <dt class="col-sm-4">Date:</dt>
+                        <dd class="col-sm-8">@Model.Invoice.CreatedAt.ToString("yyyy-MM-dd HH:mm")</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5>Customer Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Name:</dt>
+                        <dd class="col-sm-8">@Model.Customer.Name</dd>
+
+                        <dt class="col-sm-4">Email:</dt>
+                        <dd class="col-sm-8">@Model.Customer.Email</dd>
+
+                        <dt class="col-sm-4">Address:</dt>
+                        <dd class="col-sm-8">@Model.Customer.Address</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5>Invoice Items</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th class="text-end">Unit Price</th>
+                            <th class="text-center">Quantity</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.Invoice.Items)
+                        {
+                            <tr>
+                                <td>@item.ProductName</td>
+                                <td class="text-end">@item.UnitPrice.ToString("C")</td>
+                                <td class="text-center">@item.Quantity</td>
+                                <td class="text-end">@item.TotalPrice.ToString("C")</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                            <td class="text-end">@Model.Invoice.SubTotal.ToString("C")</td>
+                        </tr>
+                        <tr>
+                            <td colspan="3" class="text-end"><strong>VAT (@Model.Invoice.VATPercentage%):</strong></td>
+                            <td class="text-end">@Model.Invoice.VATAmount.ToString("C")</td>
+                        </tr>
+                        <tr class="table-primary">
+                            <td colspan="3" class="text-end"><strong>Total Amount:</strong></td>
+                            <td class="text-end"><strong>@Model.Invoice.TotalAmount.ToString("C")</strong></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

@@ -18,7 +18,6 @@ builder.Services.AddScoped<PdfService>();
 builder.Services.AddDbContext<ApplicationDbContext>(x => 
     x.UseSqlServer(builder.Configuration.GetConnectionString("SqlConnection")));
 
-// Registrera business services
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
 

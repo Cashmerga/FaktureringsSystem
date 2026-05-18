@@ -1,0 +1,166 @@
+@model Webapi.ViewModels.InvoiceFormViewModel
+@{
+    ViewData["Title"] = "Create Invoice";
+}
+
+<div class="container mt-4">
+    <h1>Create Invoice</h1>
+
+    <form asp-action="Create" method="post" id="invoiceForm">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h5>Invoice Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label asp-for="Invoice.CustomerId" class="form-label"></label>
+                            <select asp-for="Invoice.CustomerId" class="form-select" id="customerSelect">
+                                <option value="">-- Select Customer --</option>
+                                @foreach (var customer in Model.Customers)
+                                {
+                                    <option value="@customer.Id">@customer.Name (@customer.Email)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Invoice.CustomerId" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Invoice Items</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="invoiceItems">
+                            <!-- Items will be added here dynamically -->
+                        </div>
+
+                        <button type="button" class="btn btn-secondary" id="addItemBtn">
+                            <i class="bi bi-plus"></i> Add Item
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Summary</h5>
+                    </div>
+                    <div class="card-body">
+                        <dl class="row">
+                            <dt class="col-sm-6">Subtotal:</dt>
+                            <dd class="col-sm-6 text-end" id="subtotalDisplay">$0.00</dd>
+
+                            <dt class="col-sm-6">VAT (25%):</dt>
+                            <dd class="col-sm-6 text-end" id="vatDisplay">$0.00</dd>
+
+                            <hr class="my-2" />
+
+                            <dt class="col-sm-6"><strong>Total:</strong></dt>
+                            <dd class="col-sm-6 text-end"><strong id="totalDisplay">$0.00</strong></dd>
+                        </dl>
+
+                        <div class="d-grid gap-2 mt-4">
+                            <button type="submit" class="btn btn-primary">Create Invoice</button>
+                            <a href="/Invoices" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+
+    <script>
+        // Products data for JavaScript
+        const products = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Products));
+
+        let itemIndex = 0;
+
+        function addInvoiceItem() {
+            const itemHtml = `
+                <div class="invoice-item mb-3 p-3 border rounded" data-index="${itemIndex}">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">Product</label>
+                            <select name="Invoice.Items[${itemIndex}].ProductId" class="form-select product-select" required>
+                                <option value="">-- Select Product --</option>
+                                ${products.map(p => `<option value="${p.Id}" data-price="${p.Price}">${p.Name} - $${p.Price.toFixed(2)}</option>`).join('')}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Quantity</label>
+                            <input type="number" name="Invoice.Items[${itemIndex}].Quantity" class="form-control quantity-input" min="1" value="1" required />
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button type="button" class="btn btn-danger remove-item-btn" onclick="removeItem(${itemIndex})">Remove</button>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-12">
+                            <small class="text-muted">Item Total: <span class="item-total">$0.00</span></small>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('invoiceItems').insertAdjacentHTML('beforeend', itemHtml);
+            itemIndex++;
+            updateTotals();
+        }
+
+        function removeItem(index) {
+            const item = document.querySelector(`[data-index="${index}"]`);
+            if (item) {
+                item.remove();
+                updateTotals();
+            }
+        }
+
+        function updateTotals() {
+            let subtotal = 0;
+
+            document.querySelectorAll('.invoice-item').forEach(item => {
+                const productSelect = item.querySelector('.product-select');
+                const quantityInput = item.querySelector('.quantity-input');
+                const itemTotalSpan = item.querySelector('.item-total');
+
+                if (productSelect.value && quantityInput.value) {
+                    const price = parseFloat(productSelect.selectedOptions[0]?.dataset.price || 0);
+                    const quantity = parseInt(quantityInput.value || 0);
+                    const itemTotal = price * quantity;
+
+                    itemTotalSpan.textContent = `$${itemTotal.toFixed(2)}`;
+                    subtotal += itemTotal;
+                }
+            });
+
+            const vat = subtotal * 0.25;
+            const total = subtotal + vat;
+
+            document.getElementById('subtotalDisplay').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('vatDisplay').textContent = `$${vat.toFixed(2)}`;
+            document.getElementById('totalDisplay').textContent = `$${total.toFixed(2)}`;
+        }
+
+        // Event listeners
+        document.getElementById('addItemBtn').addEventListener('click', addInvoiceItem);
+
+        document.getElementById('invoiceItems').addEventListener('change', function(e) {
+            if (e.target.matches('.product-select') || e.target.matches('.quantity-input')) {
+                updateTotals();
+            }
+        });
+
+        // Add first item on load
+        addInvoiceItem();
+    </script>
+}
