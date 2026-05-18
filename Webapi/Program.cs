@@ -1,6 +1,7 @@
 using Data.Context;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using Business.Sevices;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,6 +16,9 @@ builder.Services.AddControllers()
 builder.Services.AddControllersWithViews();
 builder.Services.AddDbContext<ApplicationDbContext>(x => 
     x.UseSqlServer(builder.Configuration.GetConnectionString("SqlConnection")));
+
+// Registrera business services
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
 
 
 var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? new[] { "*" };

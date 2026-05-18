@@ -2,7 +2,8 @@
 using Faktureringsys.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Webapi.Dtos.Invoices;
+using Business.Dtos.Invoices;
+using Business.Sevices;
 
 namespace Webapi.Controllers
 {
@@ -11,10 +12,12 @@ namespace Webapi.Controllers
     public class InvoicesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IInvoiceService _invoiceService;
 
-        public InvoicesController(ApplicationDbContext context)
+        public InvoicesController(ApplicationDbContext context, IInvoiceService invoiceService)
         {
             _context = context;
+            _invoiceService = invoiceService;
         }
 
         [HttpGet]
@@ -89,65 +92,36 @@ namespace Webapi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<ActionResult<InvoiceResponseDto>> CreateInvoice(CreateInvoiceDto dto)
         {
-            var customerExists = await _context.Customers.AnyAsync(c => c.Id == dto.CustomerId);
-            if (!customerExists)
+            try
             {
-                return BadRequest("Customer not found");
-            }
+                // Anropa service för att skapa invoice
+                var invoice = await _invoiceService.CreateInvoiceAsync(dto);
 
-            var productIds = dto.Items.Select(i => i.ProductId).Distinct().ToList();
-            var existingProducts = await _context.Products
-                .Where(p => productIds.Contains(p.Id))
-                .ToDictionaryAsync(p => p.Id, p => p);
-
-            if (existingProducts.Count != productIds.Count)
-            {
-                var missingIds = productIds.Except(existingProducts.Keys).ToList();
-                return BadRequest($"Products not found: {string.Join(", ", missingIds)}");
-            }
-
-            var invoice = new Invoice
-            {
-                CustomerId = dto.CustomerId,
-                CreatedAt = DateTime.UtcNow,
-                Items = dto.Items.Select(itemDto => new InvoiceItem
+                // Skapa response DTO
+                var response = new InvoiceResponseDto
                 {
-                    ProductId = itemDto.ProductId,
-                    Quantity = itemDto.Quantity,
-                    UnitPrice = existingProducts[itemDto.ProductId].Price
-                }).ToList()
-            };
+                    Id = invoice.Id,
+                    CreatedAt = invoice.CreatedAt,
+                    CustomerId = invoice.CustomerId,
+                    CustomerName = invoice.Customer.Name,
+                    TotalAmount = invoice.TotalAmount,
+                    Items = invoice.Items.Select(item => new InvoiceItemResponseDto
+                    {
+                        Id = item.Id,
+                        ProductId = item.ProductId,
+                        ProductName = item.Product.Name,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice,
+                        TotalPrice = item.TotalPrice
+                    }).ToList()
+                };
 
-            invoice.TotalAmount = invoice.Items.Sum(item => item.Quantity * item.UnitPrice);
-
-            _context.Invoices.Add(invoice);
-            await _context.SaveChangesAsync();
-
-            await _context.Entry(invoice).Reference(i => i.Customer).LoadAsync();
-            foreach (var item in invoice.Items)
-            {
-                await _context.Entry(item).Reference(i => i.Product).LoadAsync();
+                return CreatedAtAction(nameof(GetInvoice), new { id = invoice.Id }, response);
             }
-
-            var response = new InvoiceResponseDto
+            catch (Exception ex)
             {
-                Id = invoice.Id,
-                CreatedAt = invoice.CreatedAt,
-                CustomerId = invoice.CustomerId,
-                CustomerName = invoice.Customer.Name,
-                TotalAmount = invoice.TotalAmount,
-                Items = invoice.Items.Select(item => new InvoiceItemResponseDto
-                {
-                    Id = item.Id,
-                    ProductId = item.ProductId,
-                    ProductName = item.Product.Name,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.UnitPrice,
-                    TotalPrice = item.TotalPrice
-                }).ToList()
-            };
-
-            return CreatedAtAction(nameof(GetInvoice), new { id = invoice.Id }, response);
+                return BadRequest(ex.Message);
+            }
         }
 
         [HttpPut("{id}")]
@@ -156,60 +130,22 @@ namespace Webapi.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateInvoice(int id, UpdateInvoiceDto dto)
         {
-            var invoice = await _context.Invoices
-                .Include(i => i.Items)
-                .FirstOrDefaultAsync(i => i.Id == id);
-
-            if (invoice == null)
-            {
-                return NotFound();
-            }
-
-            var customerExists = await _context.Customers.AnyAsync(c => c.Id == dto.CustomerId);
-            if (!customerExists)
-            {
-                return BadRequest("Customer not found");
-            }
-
-            var productIds = dto.Items.Select(i => i.ProductId).Distinct().ToList();
-            var existingProducts = await _context.Products
-                .Where(p => productIds.Contains(p.Id))
-                .ToDictionaryAsync(p => p.Id, p => p);
-
-            if (existingProducts.Count != productIds.Count)
-            {
-                var missingIds = productIds.Except(existingProducts.Keys).ToList();
-                return BadRequest($"Products not found: {string.Join(", ", missingIds)}");
-            }
-
-            invoice.CustomerId = dto.CustomerId;
-
-            _context.InvoiceItems.RemoveRange(invoice.Items);
-
-            invoice.Items = dto.Items.Select(itemDto => new InvoiceItem
-            {
-                InvoiceId = id,
-                ProductId = itemDto.ProductId,
-                Quantity = itemDto.Quantity,
-                UnitPrice = existingProducts[itemDto.ProductId].Price
-            }).ToList();
-
-            invoice.TotalAmount = invoice.Items.Sum(item => item.Quantity * item.UnitPrice);
-
             try
             {
-                await _context.SaveChangesAsync();
+                // Anropa service för att uppdatera invoice
+                await _invoiceService.UpdateInvoiceAsync(id, dto);
+                return NoContent();
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!InvoiceExists(id))
+                // Om invoice inte finns, returnera 404
+                if (ex.Message.Contains("Invoice not found"))
                 {
                     return NotFound();
                 }
-                throw;
+                // Andra fel (customer/products not found) returnerar 400
+                return BadRequest(ex.Message);
             }
-
-            return NoContent();
         }
 
         [HttpDelete("{id}")]
