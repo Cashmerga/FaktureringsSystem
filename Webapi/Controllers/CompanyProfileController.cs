@@ -54,6 +54,45 @@ namespace Webapi.Controllers
             return Ok(profile);
         }
 
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        public async Task<ActionResult<CompanyProfileResponseDto>> CreateCompanyProfile(CreateCompanyProfileDto dto)
+        {
+            var existingProfile = await _context.CompanyProfiles.FirstOrDefaultAsync();
+
+            if (existingProfile != null)
+            {
+                return Conflict(new { message = "A company profile already exists. Use PUT to update it instead." });
+            }
+
+            var newProfile = new Faktureringsys.Models.CompanyProfile
+            {
+                CompanyName = dto.CompanyName,
+                OrganizationNumber = dto.OrganizationNumber,
+                Email = dto.Email,
+                PhoneNumber = dto.PhoneNumber,
+                Street = dto.Street,
+                PostalCode = dto.PostalCode,
+                City = dto.City,
+                Country = dto.Country,
+                BankAccountNumber = dto.BankAccountNumber,
+                ClearingNumber = dto.ClearingNumber,
+                IBAN = dto.IBAN,
+                SWIFT = dto.SWIFT,
+                DefaultOCRPrefix = dto.DefaultOCRPrefix,
+                DefaultVATPercentage = dto.DefaultVATPercentage,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.CompanyProfiles.Add(newProfile);
+            await _context.SaveChangesAsync();
+
+            var response = MapToResponseDto(newProfile);
+            return CreatedAtAction(nameof(GetCompanyProfile), response);
+        }
+
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status201Created)]
