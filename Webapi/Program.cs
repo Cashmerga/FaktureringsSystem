@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using Business.Sevices;
 
 var builder = WebApplication.CreateBuilder(args);
-
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
@@ -14,6 +14,7 @@ builder.Services.AddControllers()
     });
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddScoped<PdfService>();
 builder.Services.AddDbContext<ApplicationDbContext>(x => 
     x.UseSqlServer(builder.Configuration.GetConnectionString("SqlConnection")));
 

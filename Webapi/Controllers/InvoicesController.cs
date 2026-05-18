@@ -13,11 +13,13 @@ namespace Webapi.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly IInvoiceService _invoiceService;
+        private readonly PdfService _pdfService;
 
-        public InvoicesController(ApplicationDbContext context, IInvoiceService invoiceService)
+        public InvoicesController(ApplicationDbContext context, IInvoiceService invoiceService, PdfService pdfService)
         {
             _context = context;
             _invoiceService = invoiceService;
+            _pdfService = pdfService;
         }
 
         [HttpGet]
@@ -94,10 +96,10 @@ namespace Webapi.Controllers
         {
             try
             {
-                // Anropa service för att skapa invoice
+                
                 var invoice = await _invoiceService.CreateInvoiceAsync(dto);
 
-                // Skapa response DTO
+               
                 var response = new InvoiceResponseDto
                 {
                     Id = invoice.Id,
@@ -132,18 +134,18 @@ namespace Webapi.Controllers
         {
             try
             {
-                // Anropa service för att uppdatera invoice
+                
                 await _invoiceService.UpdateInvoiceAsync(id, dto);
                 return NoContent();
             }
             catch (Exception ex)
             {
-                // Om invoice inte finns, returnera 404
+                
                 if (ex.Message.Contains("Invoice not found"))
                 {
                     return NotFound();
                 }
-                // Andra fel (customer/products not found) returnerar 400
+               
                 return BadRequest(ex.Message);
             }
         }
@@ -199,6 +201,24 @@ namespace Webapi.Controllers
         private bool InvoiceExists(int id)
         {
             return _context.Invoices.Any(e => e.Id == id);
+        }
+
+        [HttpGet("{id}/pdf")]
+        public async Task<IActionResult> GetInvoicePdf(int id)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.Customer)
+                .Include(i => i.Items)
+                    .ThenInclude(i => i.Product)
+                .FirstOrDefaultAsync(i => i.Id == id);
+
+            if (invoice == null)
+                return NotFound();
+            var company = await _context.CompanyProfiles.FirstOrDefaultAsync();
+
+            var pdf = _pdfService.GenerateInvoicePdf(invoice, company);
+
+            return File(pdf, "application/pdf", "invoice.pdf");
         }
     }
 }
