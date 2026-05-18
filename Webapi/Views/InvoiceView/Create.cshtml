@@ -17,15 +17,15 @@
                     </div>
                     <div class="card-body">
                         <div class="mb-3">
-                            <label asp-for="Invoice.CustomerId" class="form-label"></label>
-                            <select asp-for="Invoice.CustomerId" class="form-select" id="customerSelect">
+                            <label class="form-label">Customer</label>
+                            <select name="CustomerId" class="form-select" id="customerSelect" required>
                                 <option value="">-- Select Customer --</option>
                                 @foreach (var customer in Model.Customers)
                                 {
                                     <option value="@customer.Id">@customer.Name (@customer.Email)</option>
                                 }
                             </select>
-                            <span asp-validation-for="Invoice.CustomerId" class="text-danger"></span>
+                            <span class="text-danger"></span>
                         </div>
                     </div>
                 </div>
@@ -91,14 +91,14 @@
                     <div class="row">
                         <div class="col-md-6">
                             <label class="form-label">Product</label>
-                            <select name="Invoice.Items[${itemIndex}].ProductId" class="form-select product-select" required>
+                            <select name="Items[${itemIndex}].ProductId" class="form-select product-select" required>
                                 <option value="">-- Select Product --</option>
                                 ${products.map(p => `<option value="${p.Id}" data-price="${p.Price}">${p.Name} - $${p.Price.toFixed(2)}</option>`).join('')}
                             </select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Quantity</label>
-                            <input type="number" name="Invoice.Items[${itemIndex}].Quantity" class="form-control quantity-input" min="1" value="1" required />
+                            <input type="number" name="Items[${itemIndex}].Quantity" class="form-control quantity-input" min="1" value="1" required />
                         </div>
                         <div class="col-md-2 d-flex align-items-end">
                             <button type="button" class="btn btn-danger remove-item-btn" onclick="removeItem(${itemIndex})">Remove</button>
