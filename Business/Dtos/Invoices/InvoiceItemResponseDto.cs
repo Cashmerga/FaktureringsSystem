@@ -1,4 +1,4 @@
-namespace Webapi.Dtos.Invoices
+namespace Business.Dtos.Invoices
 {
     public class InvoiceItemResponseDto
     {
